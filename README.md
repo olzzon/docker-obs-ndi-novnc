@@ -2,9 +2,23 @@
 Run OBS Studio in Docker with NDI support and webbased GUI
 
 This is a basic setup. In the config folder you find the OBS config file. Just replace them to what ever your needs are.
-the -e SCENE="xxx" loads the scene of that name.
-the -e URL="https://google.com" replaces the name REPLACE_URL in the Untitled.json OBS config file.
 
+
+### Arguments:
+#### -e SCENE="xxx" loads the scene of that name.
+In the build example there are two scenes:
+* -e SCENE="Reciever"
+* -e SCENE="Html"
+
+#### -e URL="https://google.com" 
+Replaces the name REPLACE_URL in the Untitled.json OBS config file. So you can have different URL names.
+
+Port 4455 is also open so it's easy to control OBS from e.g. Superfly's Supertimeline.
+
+### NDI support:
+NDI is inables in and out. That's the main resason for running the container in privileged mode. So if you're not usind NDI you should turn that of when running the container.
+
+### Build and Run:
 To build the container:
 ```
 sudo docker build . -t small-novnc
