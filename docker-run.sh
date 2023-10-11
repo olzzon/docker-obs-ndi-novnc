@@ -1,0 +1,1 @@
+sudo docker run -it --privileged -p 6919:6919 -p 4455:4455 -p 5959-5980:5959-5980 -p 5900-5901:5900-5901 --gpus all -v /var/run/dbus:/var/run/dbus -t -e URL="https://google.com" -e SCENE="Html" small-novnc
