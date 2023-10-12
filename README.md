@@ -29,6 +29,12 @@ To run the container: (the same as the script in docker-run.sh)
 sudo docker run -it --privileged -p 6919:6919 -p 4455:4455 -p 5959-5980:5959-5980 -p 5900-5901:5900-5901 --gpus all -v /var/run/dbus:/var/run/dbus -t -e URL="https://google.com" -e SCENE="Html" small-novnc
 ```
 
+### Open GUI:
+The webgui can be accessed here:
+```
+http://localhost:6919
+```
+
 Feel free to improve and PR'
 
 Enjoy 😊
