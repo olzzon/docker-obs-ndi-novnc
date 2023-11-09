@@ -81,6 +81,77 @@ WORKDIR /tmp
 RUN curl -L -o obs-ndi-4.11.1-linux-x86_64.deb https://github.com/obs-ndi/obs-ndi/releases/download/4.11.1/obs-ndi-4.11.1-linux-x86_64.deb -f --retry 5
 RUN dpkg -i obs-ndi-4.11.1-linux-x86_64.deb
 
+# BUILD ARDOUR:
+WORKDIR /tmp
+
+RUN apt-fast install -y libboost-dev libasound2-dev libglibmm-2.4-dev libsndfile1-dev
+RUN apt-fast install -y libcurl4-gnutls-dev libarchive-dev liblo-dev libtag-extras-dev
+RUN apt-fast install -y vamp-plugin-sdk librubberband-dev libudev-dev libnfft3-dev
+RUN apt-fast install -y libaubio-dev libxml2-dev libusb-1.0-0-dev
+RUN apt-fast install -y libpangomm-1.4-dev liblrdf0-dev libsamplerate0-dev
+RUN apt-fast install -y libserd-dev libsord-dev libsratom-dev liblilv-dev
+RUN apt-fast install -y libgtkmm-2.4-dev libsuil-dev
+
+RUN mkdir /build-ardour
+WORKDIR /build-ardour
+RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/a/ardour/ardour_5.12.0-3.dsc
+RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/a/ardour/ardour_5.12.0.orig.tar.bz2
+RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/a/ardour/ardour_5.12.0-3.debian.tar.xz
+
+RUN dpkg-source -x ardour_5.12.0-3.dsc
+
+WORKDIR /tmp
+RUN curl https://waf.io/waf-1.6.11.tar.bz2 | tar xj
+WORKDIR /tmp/waf-1.6.11
+
+RUN patch -p1 < /build-ardour/ardour-5.12.0/tools/waflib.patch
+RUN ./waf-light -v --make-waf --tools=misc,doxygen,/build-ardour/ardour-5.12.0/tools/autowaf.py --prelude=''
+RUN cp ./waf /build-ardour/ardour-5.12.0/waf
+
+WORKDIR /build-ardour/ardour-5.12.0
+RUN ./waf configure --no-phone-home --with-backend=alsa
+RUN ./waf build -j4
+RUN ./waf install
+RUN apt-fast install -y chrpath rsync unzip
+RUN ln -sf /bin/false /usr/bin/curl
+WORKDIR /build-ardour/tools/linux_packaging
+RUN ./build --public --strip some
+RUN ./package --public --singlearch
+
+### INSTALL ARDOUR:
+
+RUN mkdir -p /install-ardour
+WORKDIR /install-ardour
+COPY --from=ardour /build-ardour/ardour-5.12.0/tools/linux_packaging/Ardour-5.12.0-dbg-x86_64.tar .
+RUN tar xvf Ardour-5.12.0-dbg-x86_64.tar
+WORKDIR /install-ardour/Ardour-5.12.0-dbg-x86_64
+
+
+# Install some libs that were not picked by bundlers - mainly X11 related.
+
+RUN apt -y install gtk2-engines-pixbuf libxfixes3 libxinerama1 libxi6 libxrandr2 libxcursor1 libsuil-0-0
+RUN apt -y install libxcomposite1 libxdamage1 liblzo2-2 libkeyutils1 libasound2 libgl1 libusb-1.0-0
+
+# First time it will fail because one library was not copied properly.
+
+RUN ./.stage2.run || true
+
+# Copy the missing libraries
+
+RUN cp /usr/lib/x86_64-linux-gnu/gtk-2.0/2.10.0/engines/libpixmap.so Ardour_x86_64-5.12.0-dbg/lib
+RUN cp /usr/lib/x86_64-linux-gnu/suil-0/libsuil_x11_in_gtk2.so Ardour_x86_64-5.12.0-dbg/lib
+RUN cp /usr/lib/x86_64-linux-gnu/suil-0/libsuil_qt5_in_gtk2.so Ardour_x86_64-5.12.0-dbg/lib
+
+# It will ask questions, say no.
+
+RUN echo -ne "n\nn\nn\nn\nn\n" | ./.stage2.run
+
+# Delete the unpacked bundle
+
+RUN rm -rf /install-ardour
+
+
+
 # COPY OBS USERSETTINGS:
 RUN mkdir /home/headless/.config
 COPY config/ /home/headless/.config
