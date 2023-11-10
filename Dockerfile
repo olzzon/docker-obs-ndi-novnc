@@ -57,7 +57,8 @@ RUN mkdir /home/headless/.vnc
 
 # SETUP FLUXBOX AND AUTOSTART OBS:
 RUN mkdir /home/headless/.fluxbox
-RUN echo "sh &\n/opt/VirtualGL/bin/vglrun /usr/bin/obs &\nexec fluxbox" >> /home/headless/.fluxbox/startup
+RUN echo "sh &\n/opt/VirtualGL/bin/vglrun /usr/bin/obs &\n" >> /home/headless/.fluxbox/startup
+RUN echo "/opt/VirtualGL/bin/vglrun /ardour/build/gtk2_ardour/ardour8 &\nexec fluxbox" >> /home/headless/.fluxbox/startup
 RUN chown -R headless /home/headless
 
 # INSTALL NDI:
@@ -97,19 +98,6 @@ RUN apt-get install -y python3 python-is-python3 git pkg-config
 WORKDIR /
 RUN git clone git://git.ardour.org/ardour/ardour.git ardour
 WORKDIR /ardour
-#RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/a/ardour/ardour_5.12.0-3.dsc
-#RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/a/ardour/ardour_5.12.0.orig.tar.bz2
-#RUN wget http://archive.ubuntu.com/ubuntu/pool/universe/a/ardour/ardour_5.12.0-3.debian.tar.xz
-
-#RUN dpkg-source -x ardour_5.12.0-3.dsc
-
-#WORKDIR /tmp
-#RUN curl https://waf.io/waf-2.0.26.tar.bz2 | tar xj
-#WORKDIR /tmp/waf-2.0.26
-
-#RUN patch -p1 < /build-ardour/ardour-5.12.0/tools/waflib.patch
-#RUN ./waf-light -v --make-waf --tools=misc,doxygen,/build-ardour/ardour-5.12.0/tools/autowaf.py --prelude=''
-#RUN cp ./waf /build-ardour/ardour/waf
 
 WORKDIR /ardour
 RUN ./waf configure --with-backend=alsa
