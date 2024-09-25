@@ -57,7 +57,8 @@ RUN mkdir /home/headless/.vnc
 
 # SETUP FLUXBOX AND AUTOSTART OBS:
 RUN mkdir /home/headless/.fluxbox
-RUN echo "sh &\n/opt/VirtualGL/bin/vglrun /usr/bin/obs &\nexec fluxbox" >> /home/headless/.fluxbox/startup
+RUN echo "sh &\n/opt/VirtualGL/bin/vglrun /usr/bin/obs &\n" >> /home/headless/.fluxbox/startup
+RUN echo "/opt/VirtualGL/bin/vglrun /ardour/build/gtk2_ardour/ardour8 &\nexec fluxbox" >> /home/headless/.fluxbox/startup
 RUN chown -R headless /home/headless
 
 # INSTALL NDI:
@@ -80,6 +81,28 @@ RUN rm -rf ndisdk
 WORKDIR /tmp
 RUN curl -L -o obs-ndi-4.11.1-linux-x86_64.deb https://github.com/obs-ndi/obs-ndi/releases/download/4.11.1/obs-ndi-4.11.1-linux-x86_64.deb -f --retry 5
 RUN dpkg -i obs-ndi-4.11.1-linux-x86_64.deb
+
+# BUILD ARDOUR:
+WORKDIR /tmp
+
+RUN apt-get install -y libboost-dev libasound2-dev libglibmm-2.4-dev libsndfile1-dev
+RUN apt-get install -y libcurl4-gnutls-dev libarchive-dev liblo-dev libtag-extras-dev
+RUN apt-get install -y vamp-plugin-sdk librubberband-dev libudev-dev libnfft3-dev
+RUN apt-get install -y libaubio-dev libxml2-dev libusb-1.0-0-dev
+RUN apt-get install -y libpangomm-1.4-dev liblrdf0-dev libsamplerate0-dev
+RUN apt-get install -y libserd-dev libsord-dev libsratom-dev liblilv-dev
+RUN apt-get install -y libgtkmm-2.4-dev libsuil-dev
+RUN apt-get install -y libpulse-dev libtag1-dev
+RUN apt-get install -y python3 python-is-python3 git pkg-config
+
+WORKDIR /
+RUN git clone git://git.ardour.org/ardour/ardour.git ardour
+WORKDIR /ardour
+
+WORKDIR /ardour
+RUN ./waf configure --with-backend=alsa
+RUN ./waf build -j16
+RUN ./waf install
 
 # COPY OBS USERSETTINGS:
 RUN mkdir /home/headless/.config
