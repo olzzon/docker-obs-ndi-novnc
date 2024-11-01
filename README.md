@@ -1,3 +1,5 @@
+## Looking for sponsors for this project
+
 # docker-obs-ndi-novnc
 Run OBS Studio in Docker with NDI support and webbased GUI
 
